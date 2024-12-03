@@ -4,7 +4,7 @@ services:
     env_file:
       - .env
     ports:
-      - 3000:3000
+      - 3001:3001
     networks:
       - remo
     depends_on:
@@ -17,7 +17,7 @@ services:
     links:
       - postgres
     ports:
-      - 3030:3030
+      - 3000:3000
     networks:
       - remo
     depends_on:
