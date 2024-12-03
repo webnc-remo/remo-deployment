@@ -1,0 +1,78 @@
+services:
+  frontend:
+    image: 
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    networks:
+      - <network-name>
+    depends_on:
+      - backend
+
+  backend:
+    image: 
+    env_file:
+      - .env
+    links:
+      - postgres
+    ports:
+      - 3030:3030
+    networks:
+      - <network-name>
+    depends_on:
+      - postgres
+    restart: always
+
+  postgres:
+    image: postgres:16.3
+    container_name: postgres
+    ports:
+      - 5432:5432
+    restart: always
+    volumes:
+      - /database:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - <network-name>
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: adminer
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    networks:
+      - <network-name>
+
+  webserver:
+    image: nginx:1.27.0-alpine
+    container_name: webserver
+    restart: always
+    depends_on:
+      - frontend
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./webserver/nginx/app.conf:/etc/nginx/conf.d/app.conf:ro
+      - ./webserver/certbot/conf:/etc/letsencrypt/:ro
+      - ./webserver/certbot/www:/var/www/certbot/:ro
+    networks:
+      - <network-name>
+    
+  certbot:
+    image: certbot/certbot:v2.10.0
+    container_name: ssl
+    volumes:
+      - ./webserver/certbot/conf:/etc/letsencrypt/:rw
+      - ./webserver/certbot/www:/var/www/certbot/:rw
+    networks:
+      - <network-name>
+  
+networks:
+  <network-name>:
+    driver: bridge
+    
