@@ -2,10 +2,11 @@
 set -e
 
 frontend_service=frontend
-backend_service_image=image-name-backend
-frontend_service_image=image-name-frontend
+backend_service=backend
+backend_service_image=tantran308/remo-be:latest
+frontend_service_image=tantran308/remo-fe:latest
 web_server_name=webserver
-migration_command="npm run migrate:run:prod"
+# migration_command="npm run migrate:run:prod"
 
 
 reload_nginx() {
@@ -77,8 +78,8 @@ deploy() {
   fi
 
   # Run backend migrations
-  echo "Running backend migrations..."
-  docker-compose exec $backend_service $migration_command
+  # echo "Running backend migrations..."
+  # docker-compose exec $backend_service $migration_command
 
 
   # Reload nginx to apply changes
