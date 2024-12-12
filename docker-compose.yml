@@ -7,15 +7,12 @@ services:
       - 3001:3001
     networks:
       - remo
-    depends_on:
-      - backend
+    restart: always
 
   backend:
     image: tantran308/remo-be:latest
     env_file:
       - .env
-    links:
-      - postgres
     ports:
       - 3000:3000
     networks:
@@ -29,13 +26,13 @@ services:
     container_name: postgres
     ports:
       - 5432:5432
-    restart: always
     volumes:
       - /database:/var/lib/postgresql/data
     env_file:
       - .env
     networks:
       - remo
+    restart: always
 
   adminer:
     image: adminer:4.8.1
@@ -46,22 +43,26 @@ services:
       - .env
     networks:
       - remo
+    restart: always
 
   webserver:
     image: nginx:1.27.0-alpine
     container_name: webserver
-    restart: always
     depends_on:
       - frontend
+      - backend
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
     volumes:
-      - ./webserver/nginx/app.conf:/etc/nginx/conf.d/app.conf:ro
-      - ./webserver/certbot/conf:/etc/letsencrypt/:ro
-      - ./webserver/certbot/www:/var/www/certbot/:ro
+      - ./webserver/nginx:/etc/nginx/templates:ro
+      - ./webserver/certbot/conf:/etc/letsencrypt:ro
+      - ./webserver/certbot/www:/var/www/certbot:ro
     networks:
       - remo
+    restart: always
 
   certbot:
     image: certbot/certbot:v2.10.0
