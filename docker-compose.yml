@@ -62,7 +62,7 @@ services:
       - ./webserver/certbot/www:/var/www/certbot/:ro
     networks:
       - remo
-    
+
   certbot:
     image: certbot/certbot:v2.10.0
     container_name: ssl
@@ -71,8 +71,7 @@ services:
       - ./webserver/certbot/www:/var/www/certbot/:rw
     networks:
       - remo
-  
+
 networks:
   remo:
     driver: bridge
-    

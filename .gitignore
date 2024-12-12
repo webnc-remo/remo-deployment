@@ -1,1 +1,15 @@
+# dotenv environment variables file
 .env
+
+# Docker compose ganarated files
+db-data
+
+# Local History
+.history
+init-data.sh
+
+# Vscode
+.vscode
+
+# certbot
+webserver/certbot

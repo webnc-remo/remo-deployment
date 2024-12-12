@@ -3,10 +3,10 @@ set -e
 
 frontend_service=frontend
 backend_service=backend
-backend_service_image=tantran308/remo-be:latest
-frontend_service_image=tantran308/remo-fe:latest
+backend_service_image=tantran308/remo-be
+frontend_service_image=tantran308/remo-fe
 web_server_name=webserver
-# migration_command="npm run migrate:run:prod"
+migration_command="npm run migration:run"
 
 
 reload_nginx() {
@@ -16,7 +16,6 @@ reload_nginx() {
 
 
 deploy() {
-  ideploy() {
   echo "Deploying the latest version of frontend and backend..."
 
   # Pull the latest images for backend and frontend
