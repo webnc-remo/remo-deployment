@@ -13,3 +13,5 @@ init-data.sh
 
 # certbot
 webserver/certbot
+
+.env.prod
