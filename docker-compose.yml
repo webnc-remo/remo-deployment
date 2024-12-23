@@ -1,8 +1,8 @@
 services:
   frontend:
-    image: tantran308/remo-fe:latest
+    image: tantran308/remo-fe:${VERSION:-latest}
     env_file:
-      - .env
+      - .env.prod
     ports:
       - 3001:3001
     networks:
@@ -10,9 +10,9 @@ services:
     restart: always
 
   backend:
-    image: tantran308/remo-be:latest
+    image: tantran308/remo-be:${VERSION:-latest}
     env_file:
-      - .env
+      - .env.prod
     ports:
       - 3000:3000
     networks:
@@ -29,7 +29,7 @@ services:
     volumes:
       - /database:/var/lib/postgresql/data
     env_file:
-      - .env
+      - .env.prod
     networks:
       - remo
     restart: always
@@ -40,7 +40,7 @@ services:
     ports:
       - 8080:8080
     env_file:
-      - .env
+      - .env.prod
     networks:
       - remo
     restart: always
@@ -74,10 +74,8 @@ services:
   nginx:
     image: jonasal/nginx-certbot:latest
     restart: unless-stopped
-    environment:
-      - CERTBOT_EMAIL
     env_file:
-      - .env
+      - .env.prod
     depends_on:
       - backend
       - frontend

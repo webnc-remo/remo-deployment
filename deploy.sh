@@ -1,33 +1,33 @@
 #!/bin/bash
 set -e
 
+# Define services and variables
 frontend_service=frontend
 backend_service=backend
 backend_service_image=tantran308/remo-be
 frontend_service_image=tantran308/remo-fe
-web_server_name=webserver
+web_server_name=nginx
 migration_command="npm run migration:run"
 
+# Get arguments
+service=${1:-all} # Default to "all" if no argument is provided
+backend_version=${2:-latest}
+frontend_version=${2:-latest}
 
 reload_nginx() {
- nginx_id=$(docker ps -f name=$web_server_name -q | tail -n1)
- docker exec $nginx_id nginx -s reload
+  nginx_id=$(docker ps -f name=$web_server_name -q | tail -n1)
+  docker exec $nginx_id nginx -s reload
 }
 
+deploy_backend() {
+  echo "Deploying backend service..."
 
-deploy() {
-  echo "Deploying the latest version of frontend and backend..."
-
-  # Pull the latest images for backend and frontend
-  echo "Pulling latest images for backend and frontend..."
-  docker pull $backend_service_image:latest
-  docker pull $frontend_service_image:latest
-
-  echo "Checking for updated images and stopping containers for updated services..."
-
+  # Pull the specified backend image
+  echo "Pulling backend image..."
+  docker pull $backend_service_image:$backend_version
 
   # Check if backend image has changed
-  backend_image_updated=$(docker inspect --format='{{.Id}}' $backend_service_image:latest)
+  backend_image_updated=$(docker inspect --format='{{.Id}}' $backend_service_image:$backend_version)
   backend_container_id=$(docker ps -f name=$backend_service -q)
   if [ -n "$backend_container_id" ]; then
     current_backend_image=$(docker inspect --format='{{.Image}}' $backend_container_id)
@@ -38,8 +38,20 @@ deploy() {
     fi
   fi
 
+  # Start backend container
+  echo "Starting backend container..."
+  VERSION=$backend_version docker-compose up -d $backend_service
+}
+
+deploy_frontend() {
+  echo "Deploying frontend service..."
+
+  # Pull the specified frontend image
+  echo "Pulling frontend image..."
+  docker pull $frontend_service_image:$frontend_version
+
   # Check if frontend image has changed
-  frontend_image_updated=$(docker inspect --format='{{.Id}}' $frontend_service_image:latest)
+  frontend_image_updated=$(docker inspect --format='{{.Id}}' $frontend_service_image:$frontend_version)
   frontend_container_id=$(docker ps -f name=$frontend_service -q)
   if [ -n "$frontend_container_id" ]; then
     current_frontend_image=$(docker inspect --format='{{.Image}}' $frontend_container_id)
@@ -50,47 +62,43 @@ deploy() {
     fi
   fi
 
-  # Deploy new containers with the latest images
-  echo "Deploying new containers with latest images..."
-  docker-compose up -d --scale $backend_service=1 --scale $frontend_service=1
+  # Start frontend container
+  echo "Starting frontend container with version: $frontend_version"
+  VERSION=$frontend_version docker-compose up -d $frontend_service
+}
 
+cleanup_images() {
+  echo "Cleaning up unused Docker images..."
+  docker image prune -a -f
+}
 
-  # Check if backend container is running
-  echo "Checking backend container..."
-  backend_container_id=$(docker ps -f name=$backend_service -q)
-  if [ -z "$backend_container_id" ]; then
-    echo "Backend container failed to start, rolling back to previous version..."
-    # Rollback by recreating the old containers
-    docker-compose up -d --scale $backend_service=1 --scale $frontend_service=1
-    exit 1
-  fi
-
-
-  # Check if frontend container is running
-  echo "Checking frontend container..."
-  frontend_container_id=$(docker ps -f name=$frontend_service -q)
-  if [ -z "$frontend_container_id" ]; then
-    echo "Frontend container failed to start, rolling back to previous version..."
-    # Rollback by recreating the old containers
-    docker-compose up -d --scale $backend_service=1 --scale $frontend_service=1
-    exit 1
-  fi
-
-  # Run backend migrations
-  # echo "Running backend migrations..."
-  # docker-compose exec $backend_service $migration_command
-
+# Main deploy function
+deploy() {
+  case $service in
+    backend)
+      deploy_backend
+      ;;
+    frontend)
+      deploy_frontend
+      ;;
+    all)
+      deploy_backend
+      deploy_frontend
+      ;;
+    *)
+      echo "Invalid service specified. Use 'backend', 'frontend', or 'all'."
+      exit 1
+      ;;
+  esac
 
   # Reload nginx to apply changes
   echo "Reloading nginx..."
   reload_nginx
 
-
-  echo "Clean up image"
-  docker image prune -a -f
-
+  # Clean up images
+  cleanup_images
 
   echo "Deployment completed successfully!"
 }
 
-deploy $1
+deploy
