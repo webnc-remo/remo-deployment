@@ -44,33 +44,7 @@ services:
     networks:
       - remo
     restart: always
-  # webserver:
-  #   image: nginx:1.27.0-alpine
-  #   container_name: webserver
-  #   depends_on:
-  #     - frontend
-  #     - backend
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./webserver/nginx:/etc/nginx/templates:ro
-  #     - ./webserver/certbot/conf:/etc/letsencrypt:ro
-  #     - ./webserver/certbot/www:/var/www/certbot:ro
-  #   networks:
-  #     - remo
-  #   restart: always
 
-  # certbot:
-  #   image: certbot/certbot:v2.10.0
-  #   container_name: ssl
-  #   volumes:
-  #     - ./webserver/certbot/conf:/etc/letsencrypt/:rw
-  #     - ./webserver/certbot/www:/var/www/certbot/:rw
-  #   networks:
-  #     - remo
   nginx:
     image: jonasal/nginx-certbot:latest
     restart: unless-stopped
@@ -87,6 +61,38 @@ services:
     volumes:
       - ./webserver/certbot/conf:/etc/letsencrypt
       - ./webserver/nginx:/etc/nginx/templates
+
+  postgres-llm:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-llm
+    healthcheck:
+      test: pg_is_ready -U $POSTGRES_USER
+      start_interval: 1s
+      start_period: 5s
+      interval: 5s
+      retries: 5
+    env_file:
+      - .env.ai
+    ports:
+      - "5433:5432"
+    networks:
+      - remo
+    volumes:
+      - ./data:/var/lib/postgresql/data
+
+  llm:
+    build:
+      context: ../RAG-LLM
+      dockerfile: Dockerfile
+    container_name: llm
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.ai
+    networks:
+      - remo
+    volumes:
+      - ./volume:/app-data
 
 networks:
   remo:

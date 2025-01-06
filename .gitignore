@@ -15,3 +15,6 @@ init-data.sh
 webserver/certbot
 
 .env.prod
+.env.ai
+
+data
